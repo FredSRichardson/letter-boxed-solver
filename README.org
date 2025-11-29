@@ -1,0 +1,37 @@
+* Installing Open FST
+
+Several modules are available:
+#+begin_quote
+pyfst
+openfst
+openfst-python
+#+end_quote
+
+Of these, I was only able to install =openfst-python= in a Python 3.6
+environment.
+
+The following Debian Ubuntu packages are required packages:
+#+begin_quote
+openfst
+libfst-tools
+libfst-dev
+#+end_quote
+
+Then you can install =openfst-python=:
+
+#+begin_src bash
+%  pip install openfst-python
+#+end_src
+
+The GitHub project page for =openfst-python= is [[https://github.com/jpuigcerver/openfst-python][here]].
+
+* Today's example
+
+The edges of the puzzle:
+
+#+begin_quote
+TOP: I D M
+LEFT: T L P
+RIGH: R F E
+BOTTOM: B O U
+#+end_quote
