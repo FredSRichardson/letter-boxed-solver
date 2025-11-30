@@ -189,26 +189,52 @@ res_fst = fst.compose(lb_fst, lex_fst)
 nb_fst = fst.shortestpath(res_fst, nshortest=100).rmepsilon()
 
 print('+++ Single word coverage: ')
-final_res = []
+# Map of: 
+# #unique-letters -> set-of-unique-letters -> shortest to longeest words
+final_res = {}
+flat_res = []
 for nd in nb_fst.states():
     for arc in nb_fst.arcs(nd):
         if arc.olabel != 0:
             wrd = nb_fst.output_symbols().find(arc.olabel)
             wrd_set = set(wrd)
-            final_res.append( (wrd, wrd_set) )
-            print(f'{wrd} {len(wrd_set)}')
+            n_uniq = len(wrd_set)
+            if not n_uniq in final_res:
+                final_res[n_uniq] = {}
+            wrd_set_key = ' '.join(list(sorted(wrd_set)))
+            if not wrd_set_key in final_res[n_uniq]:
+                final_res[n_uniq][wrd_set_key] = []
+            final_res[n_uniq][wrd_set_key].append(wrd)
+            # print(f'{wrd} {len(wrd_set)}')
+            flat_res.append( (wrd, wrd_set) )
+
+for n_uniq in sorted(final_res, key=lambda x: -x):
+    for wrd_set in final_res[n_uniq]:
+        print(f'  number-letters: {n_uniq}, letters: {wrd_set}:')
+        for wrd in sorted(final_res[n_uniq][wrd_set], key=lambda x: len(x)):
+            print(f'    {wrd} len={len(wrd)}')
 
 print('')
 print('+++ Word pair coverage: ')
-pair_res = []
-for wrd, wrd_set in final_res:
-    for wrd2, wrd_set2 in final_res:
+pair_res = {}
+for wrd, wrd_set in flat_res:
+    for wrd2, wrd_set2 in flat_res:
         if wrd == wrd2: continue
         if wrd[-1] != wrd2[0]: continue
         tot_set = wrd_set | wrd_set2
-        pair_res.append( (wrd, wrd2, len(tot_set)) )
+        n_uniq = len(tot_set)
+        if not n_uniq in pair_res:
+            pair_res[n_uniq] = {}
+        wrd_set_key = ' '.join(list(sorted(tot_set)))
+        if not wrd_set_key in pair_res[n_uniq]:
+            pair_res[n_uniq][wrd_set_key]= []
+        pair_res[n_uniq][wrd_set_key].append(wrd + ' ' + wrd2)
 
-for wrd, wrd2, set_len in sorted(pair_res, key=lambda x: -x[2]):
-    print(f'{wrd} {wrd2} {set_len}')
+for n_uniq in sorted(pair_res, key=lambda x: -x):
+    for wrd_set in pair_res[n_uniq]:
+        print(f'  number-letters: {n_uniq}, letters: {wrd_set}:')
+        for wrd in sorted(pair_res[n_uniq][wrd_set], key=lambda x: len(x)):
+            print(f'    {wrd} len={len(wrd)}')
+
 print('')
 
