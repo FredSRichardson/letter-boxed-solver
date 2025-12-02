@@ -119,7 +119,8 @@ def make_lb_fst(lb_sides, lex_fst):
 parser = argparse.ArgumentParser(description='Solve the NYT Letter Boxed puzzle using a word list')
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='increase output verbosity')
-
+parser.add_argument('--lex-fst', type=str, help='Save the lexicon FST in GraphViz format')
+parser.add_argument('--lb-fst', type=str, help='Save the Letter Boxed FST in GraphViz format')
 parser.add_argument('-l','--left', type=str,
                     help='Left edge of Letter Boxed puzzle', 
                     required=True)
@@ -179,10 +180,15 @@ for wrd in sorted(lexicon):
     lb_wrds.append( (wrd, wrd_set) )
 
 lex_fst = make_lex_fst(lb_set, lb_wrds)
+if args.lex_fst:
+    lex_fst.draw(args.lex_fst)
 
 lb_fst = make_lb_fst( [ lb_t, lb_l, lb_r, lb_b ], lex_fst)
+if args.lb_fst:
+    lb_fst.draw(args.lb_fst)
 
 lex_fst = fst.determinize(lex_fst)
+
 
 res_fst = fst.compose(lb_fst, lex_fst)
 

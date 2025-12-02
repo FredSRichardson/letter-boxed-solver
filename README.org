@@ -233,3 +233,67 @@ KYTES
 
 The solution ended up being "BYTES" (which I got after trying
 "TYPES").
+
+* Under the hood
+
+** Letter Boxed
+
+The Letter Boxed solver works by creating two FSTs.  The first "Letter
+Boxed" FST is a grammar created from the puzzle of the day.  For a
+given puzzle, the start node of the FST goes to any of the 12 letters
+in the puzzle where each arc emits the corresponding letter.  Each
+group of 3 letters from each side of puzzle can to any of the
+remaining 9 letters on the other sides of the puzzle and arcs are
+created for each of these transitions.  Finally, any of the letters in
+the puzzle can also go directly to the end node.  So the "Letter
+Boxed" FST is very much a cyclic graph.  All weights are set to "one"
+for the arcs (that is the arcs have no cost).
+
+A second FST is created from the input word list which we'll call the
+"Lexicon" FST.  All words in the
+list that are at least 3 letters long and only use the 12 letters in
+the puzzle are kept.  These words are used to create a big "sausage
+network" by taking each word, splitting it into it's component
+letters and adding an arc with each letter as the input symbol and
+=<epsilon>= as the output symbol with the exception of the very last
+letter of the word which has the full word string as the output
+symbol.  The final arc also uses a weight equal to negative the number
+of unique letters in the word so that words that cover more of the 12
+letters in the puzzle have a higher score.
+
+Finally, we take the "Letter Boxed" FST and =compose= it with the
+"Lexicon" FST creating an FST of all words in the lexicon that can be
+parsed by the puzzle.  By taking the N shortest paths through the
+puzzle, we can find the words that cover the most unique letters in
+the puzzle.  
+
+From there, we can create word pairs from the single words results by
+joining words that share the same last and first letter and sort these
+pairs by the number of unique.  One could accomplish the same thing by
+creating a "Two Letter Lexicon" FST (by joining a copy of the
+"Lexicon" FST onto the end of itself) and doing the composition again,
+but I don't think you would end up with a different result. If one
+were interested in 3 to 5 word solutions, you likely would want to use
+an FST that represents these explicitly (for example by pasting up to
+5 copies of the "Lexicon" FST end-to-end and adding a transition to
+the final end node after each copy).  I was really only interested in
+2 word solutions, but funky multi-word solutions could be fun as well.
+
+** Wordle / Wordly
+The wordle solver is a lot more straight forward.  Again two FSTs are
+created, the first being a "Wordle" FST that has a sausage structure
+composed of 5 linked FSTs (sausages) each of which only has parallel
+arcs between two nodes. Each sausage links is created using all
+letters in the alphabet excluding the ones in a user specified
+exclusion pattern or they contain a single letter for the case where
+the correct letter in a position is specified by the user.
+
+The second FST is nearly identical to the "Lexicon" FST of the
+previous example which matches sequences of letters at the input and
+emits a single word at the output.  Only 5 letter words are considered
+and only words that don't contain any excluded letters and do contain
+letters that were specified in a positional pattern.
+
+Again the composition of the two FSTS yields a list of possible
+solutions to the puzzle.  The quality of the output will rely heavily
+on the word lexicon you use.
