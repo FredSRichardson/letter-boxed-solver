@@ -188,6 +188,13 @@ res_fst = fst.compose(lb_fst, lex_fst)
 
 nb_fst = fst.shortestpath(res_fst, nshortest=100).rmepsilon()
 
+print('+++ Possible Letter Boxed solutions for puzzle:')
+print(f'  LEFT:   {" ".join(lb_l)}')
+print(f'  TOP:    {" ".join(lb_t)}')
+print(f'  RIGHT:  {" ".join(lb_r)}')
+print(f'  BOTTOM: {" ".join(lb_b)}')
+print('')
+
 print('+++ Single word coverage: ')
 # Map of: 
 # #unique-letters -> set-of-unique-letters -> shortest to longeest words

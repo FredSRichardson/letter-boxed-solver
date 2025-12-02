@@ -1,3 +1,18 @@
+* Introduction
+
+This repo includes scripts for helping you solve some of the NYT
+games.  Specifically:
+
+|---------------+--------------|
+| Script        | Puzzle       |
+|---------------+--------------|
+| lbsolver.py   | Letter Boxed |
+| wdlysolver.py | Wordly       |
+|---------------+--------------|
+
+See the examples below.
+
+
 * Requirements
 This code has only been tested on =Ubuntu 24.04= runing under =WSL= on
 a Windows 11 system.  Other operating systems may be more difficult
@@ -19,54 +34,202 @@ follows.  This only seems to work for me with Python version 3.6 or
   pip install openfst-python
 #+end_src
 
+Check the build requirements if you run into issues [[https://github.com/jpuigcerver/openfst-python][here]] (for example
+you GCC installed).  
 
+* Where to get a word list
 
-** Installing =OpneFST= libraries in Ubuntu 24.04
-More information about the OpenFST library can be found [[https://www.openfst.org/twiki/bin/view/FST/WebHome][here]] and 
+** For =Letter Boxed= you can try =zyzzyva= from =scrabbleplayers.org=
 
-The scripts here require that the =openfst= libraries are installed on
-your system. 
-
-Unfortunatley, I only know how to do that on =Ubuntu 24.04= or =Debian
-Trixie= systems which would require that the following packages are
-installed: 
-
-#+begin_quote
-libfst-dev
-libfst-tools
-libfst22
-#+end_quote
-
-This could be accomplished with the following commands:
+One possible place to get a word list for Letter Boxed is from
+=scrabbleplayers.org= by installing =zyzzyva=.  For example, follow
+these steps and choose your local directory you create
+=NASPAZyzzyva342/install= for the installation:
 
 #+begin_src bash
-  sudo apt-get install libfst-dev libfst-tools
+  wget https://scrabbleplayers.org/zyzzyva/packages/342/NASPAZyzzyva342.zip
+  mkdir NASPAZyzzyva342
+  cd NASPAZyzzyva342
+  unzip ../NASPAZyzzyva342.zip 
+  mv 'Install NASPA Zyzzyva 3.4.2' Install_NASPA_Zyzzyva_3.4.2
+  ./Install_NASPA_Zyzzyva_3.4.2 
 #+end_src
 
-** Installing =openfst-python=
+The word list you want to use should be here:
+=NASPAZyzzyva342/install/data/words/North-American/NSWL2023.txt=
 
+The scrabble word list works pretty well with the NYT Letter Boxed
+puzzles (but not perfectly).
 
+** For =Wordle= you search around
 
-Of these, I was only able to install =openfst-python= in a Python 3.6
-environment.
+For example, you could try [[https://wordletools.azurewebsites.net/weightedbottles][this one]] from =wordletools= or [[https://wordraiders.com/wordle-words/][this one]]
+from =wordraiders=.  You can try out more
+options by Googling for Worldle word lists.  The Scrabble dictionary
+above doesn't work particularly well - you have to filter out the
+output yourself.
 
-The following Debian Ubuntu packages are required packages:
+* Letter Boxed Example
+The =lbsolver.py= script usage is as follows:
+#+begin_quote
+usage: lbsolver.py [-h] [-v] -l LEFT -r RIGHT -t TOP -b BOTTOM -w WORD_LIST
 
-Then you can install =openfst-python=:
+Solve the NYT Letter Boxed puzzle using a word list
 
-#+begin_src bash
-%  pip install openfst-python
-#+end_src
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase output verbosity
+  -l LEFT, --left LEFT  Left edge of Letter Boxed puzzle
+  -r RIGHT, --right RIGHT
+                        Right edge of Letter Boxed puzzle
+  -t TOP, --top TOP     Top edge of Letter Boxed puzzle
+  -b BOTTOM, --bottom BOTTOM
+                        Bottom edge of Letter Boxed puzzle
+  -w WORD_LIST, --word-list WORD_LIST
+                        Word list to use
+#+end_quote
 
-The GitHub project page for =openfst-python= is [[https://github.com/jpuigcerver/openfst-python][here]].
+You just use the string of letters in the left, top, right and bottom of the
+box for each of the =-l=, =-t=, =-r= and =-t= arguments (you can
+actually mix them up and it won't matter) and you specify a word list.
 
-* Today's example
-
-The edges of the puzzle:
+For example, the following puzzle (from Dec 01 2025):
 
 #+begin_quote
-TOP: I D M
-LEFT: T L P
-RIGH: R F E
-BOTTOM: B O U
+  LEFT:   C H O
+  TOP:    P F N
+  RIGHT:  A I T
+  BOTTOM: R D L
 #+end_quote
+
+Would require the following command line arguments (using the above =zyzzyva= lexicon):
+#+begin_src bash
+  ./lbsolver.py -l CHO -t PFN -r AIT -b RDL \
+                -w NASPAZyzzyva342/install/data/words/North-American/NSWL2023.txt \
+                   > 01Dec2025-letter-boxed.txt
+#+end_src
+
+And the output looks like this:
+
+#+begin_quote
+Number of words loaded from "NASPAZyzzyva342/install/data/words/North-American/NSWL2023.txt": 195640
++++ Possible Letter Boxed solutions for puzzle:
+  LEFT:   C H O
+  TOP:    P F N
+  RIGHT:  A I T
+  BOTTOM: R D L
+
++++ Single word coverage: 
+  number-letters: 10, letters: A C H I L N O P R T:
+    ANTHROPICAL len=11
+    PHILANTHROPIC len=13
+    PHILANTHROPICAL len=15
+  number-letters: 10, letters: A D H I L N O P R T:
+    PHILANTHROPOID len=14
+  number-letters: 9, letters: A C I L N O P R T:
+    PANTROPICAL len=11
+    NONTROPICAL len=11
+  number-letters: 9, letters: A C D F H I N R T:
+    HANDICRAFT len=10
+  number-letters: 9, letters: A D H I N O P R T:
+<etc...>
++++ Word pair coverage: 
+  number-letters: 12, letters: A C D F H I L N O P R T:
+    HANDCRAFT TROPICAL len=18
+    HANDCRAFT TRIPODAL len=18
+    HANDCRAFT TRIPLOID len=18
+    HANDCLAP PORTFOLIO len=18
+    HANDICAP PORTFOLIO len=18
+    HANDICRAFT TROPICAL len=19
+    HANDICRAFT TRIPODAL len=19
+    HANDICRAFT TRIPLOID len=19
+    PROLIFIC CANTHARIDIN len=20
+    AFICIONADA ANTHROPICAL len=22
+  number-letters: 11, letters: A C D H I L N O P R T:
+    CALTHROP PARANOID len=17
+    DALTONIC CALTHROP len=17
+    TORNADIC CALTHROP len=17
+    ANORTHIC CROPLAND len=17
+<etc...>
+#+end_quote
+
+The output is giving you the best sequences of single words and word
+pairs by the number of unique letters they cover in the puzzle.  So in
+this case, I could try and impress my family and friends with the two
+word solutions =HANDCRAFT TROPICAL= (which concievably I could have
+figured out) or =AFICIONADA ANTHROPICAL= (which I never would have
+figured out).  I honestly think though it's best to wait until you've
+tried to get a good solution yourself before running this script.
+That is if you enjoy the puzzle.
+
+* Wordle Example
+
+So the syntax for the =wdlysolver.py= script is as follows:
+
+#+begin_quote
+usage: wdlysolver.py [-h] [-v] [-ex EX] [-c1 C1] [-c2 C2] [-c3 C3] [-c4 C4] [-c5 C5] -w WORD_LIST
+
+Solve the NYT Letter Boxed puzzle using a word list
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         increase output verbosity
+  -ex EX                Letters to exclude
+  -c1 C1                Pattern to search for first letter of 5 letter for - only ".", "C", "^ADF" are supported
+  -c2 C2                Pattern to search for first letter of 5 letter for - only ".", "C", "^ADF" are supported
+  -c3 C3                Pattern to search for first letter of 5 letter for - only ".", "C", "^ADF" are supported
+  -c4 C4                Pattern to search for first letter of 5 letter for - only ".", "C", "^ADF" are supported
+  -c5 C5                Pattern to search for first letter of 5 letter for - only ".", "C", "^ADF" are supported
+  -w WORD_LIST, --word-list WORD_LIST
+                        Word list to use
+#+end_quote
+
+For letters which are solved in you puzzle, you just put the
+letter. For example, if you know the 3rd letter is "A", use the
+command line option =-c3 "A"=.  If one or more letters do
+not occur in a given position, prefix them with the caret character
+"^".  For example, if you know "C", "D" and "E" don't occur in
+position 2, add the command line option =-c2 "^CDE"=.  Any letters you
+have already ruled out should be added with the =-ex= option.  For
+example if "F", "G", "H" and "I" do not occur in the solution, use the
+command line option =-ex "FGHI"=.
+
+I actually play =Wordly= on the Android which may have a very
+different allowable lexicon than NYT Wordle.  Regardless, here's what
+I get for the Wordly 01 Dec 2025 puzzle.  My first two guesses were
+"RAISE" and "YOUTH" and I ended up with 4 letters all of which were in
+the wrong place: "Y" was not in slot 1, "S" and "T" were not in slot 4
+and E was not in slot 5.  The remaining letters "RAIOUH" were not in
+the solution.  So I ran the =wdlysolver.py= script as follows:
+
+#+begin_src bash
+  ./wdlysolver.py -ex RAIOUH -c1 '^Y'  -c4 '^ST' -c5 '^E' -w <word-list>
+#+end_src
+
+Both the =wordletools= and =wordraiders= lists failed for me (no words
+matched) while the Scrabble list gave me these interesting results, of
+which I only really believed "BYTES" and "TYPES" would be accepted by
+Wordly. I looked up a few of the other words like "WYTES" and "KYTES",
+and according to Merriam-Webster they are "chiefly Scottish". Would
+they really be allowed in a North American game of Scrabble?  Maybe
+only if you can pull off a very convincing Scottish accent - and the
+bar might not be too high among Americans listeners.
+
+#+begin_quote
+BYTES
+WYTES
+STYES
+STYED
+STEWY
+TYNES
+TYRES
+TYPES
+TYERS
+TYEES
+TYKES
+TREYS
+KYTES
+#+end_quote
+
+The solution ended up being "BYTES" (which I got after trying
+"TYPES").
