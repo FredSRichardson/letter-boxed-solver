@@ -8,7 +8,7 @@ import openfst_python as fst
 EPSILON_TOK = '<epsilon>'
 
 # Create Wordl[ey] FST from requested pattern:
-def make_wdl_fst(cpat):
+def make_wdl_fst(cpat, requested):
     assert len(cpat) == 5, 'ERROR: make_wdl_fst() expects a list of 5 patterns'
 
     wdl_fst = fst.Fst()
@@ -89,7 +89,7 @@ def make_lex_fst(lexicon):
     return lex_fst
 
 
-pattern_hint = 'only ".", "[ADF]", "[^ADF]" are supported'
+pattern_hint = 'only ".", "C", "^ADF" are supported'
 
 parser = argparse.ArgumentParser(description='Solve the NYT Letter Boxed puzzle using a word list')
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -129,29 +129,35 @@ cpat = []
 
 all_chars = set(string.ascii_uppercase)
 
+req_chars = set()
 for c in [ c1, c2, c3, c4, c5 ]:
     if c == '.':
         cpat.append(all_chars)
         continue
     # At this point, the pattern must be "[AB...]" or "[^AB...]":
-    ret = re.match(r'^\[(\S+)\]$', c)
+    ret = re.match(r'^(\^?[A-Z]+)$', c)
     assert ret is not None, f'ERROR: unsupported pattern "{c}" - {pattern_hint}'
     pat_str = ret.group(1)
     # See if this is an exclusion pattern (i.e. "[^AB...]"):
     is_excl_pat = False
-    if len(pat_str) > 1 and pat_str[0] == '^':
+    if len(pat_str) > 0 and pat_str[0] == '^':
         is_excl_pat = True
         pat_str = pat_str[1:]
+    else:
+        # Only exclusion patterns can have more than one character:
+        assert len(pat_str) == 1, f'ERROR: unsupported pattern "{c}" - {pattern_hint}'
+    # All exclusion or inclusion chars are in the solution - they are required:
+    for c in pat_str:
+        req_chars.add(c)
     # Make sure pattern is still legit:
     assert len(pat_str) > 0, f'ERROR: unsupported pattern "{c}" - {pattern_hint}'
-    # Split on comma
     pat_chars = set(pat_str)
     assert pat_chars <= all_chars, f'ERROR: Pattern contains non-letter characters in {c} - {pattern_hint}'
     if is_excl_pat:
         pat_chars = all_chars - pat_chars
     cpat.append(pat_chars)
 
-wdl_fst = make_wdl_fst(cpat)
+wdl_fst = make_wdl_fst(cpat, req_chars)
 
 # Set of letters that do not occur in the solution:
 ex_chars = set(args.ex)
@@ -169,7 +175,7 @@ with open(args.word_list) as ifp:
         if len(wrd) != 5:
             continue
         # Word cannot contain excluded characters:
-        if set(wrd) & ex_chars:
+        if not set(wrd) >= req_chars:
             continue
         lexicon.add(wrd)
 

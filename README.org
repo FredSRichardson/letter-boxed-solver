@@ -1,21 +1,56 @@
-* Installing Open FST
+* Requirements
+This code has only been tested on =Ubuntu 24.04= runing under =WSL= on
+a Windows 11 system.  Other operating systems may be more difficult
+(like a native Windows 11 install, though =msys2= might provide a
+solution).
 
-Several modules are available:
+The scrpits here use the python module [[https://github.com/jpuigcerver/openfst-python][openfst-python]] which can be
+installed using =pip=.  The module installation downloads the [[https://www.openfst.org/twiki/bin/view/FST/WebHome][OpenFST
+library]] source code and compiles it with the python extensions
+enabled.
+
+This can be accomplished using =conda= (=miniconda= or =Anaconda=) as
+follows.  This only seems to work for me with Python version 3.6 or
+3.7: 
+
+#+begin_src bash
+  conda create  -n pyfst python=3.7
+  conda activate pyfst
+  pip install openfst-python
+#+end_src
+
+
+
+** Installing =OpneFST= libraries in Ubuntu 24.04
+More information about the OpenFST library can be found [[https://www.openfst.org/twiki/bin/view/FST/WebHome][here]] and 
+
+The scripts here require that the =openfst= libraries are installed on
+your system. 
+
+Unfortunatley, I only know how to do that on =Ubuntu 24.04= or =Debian
+Trixie= systems which would require that the following packages are
+installed: 
+
 #+begin_quote
-pyfst
-openfst
-openfst-python
+libfst-dev
+libfst-tools
+libfst22
 #+end_quote
+
+This could be accomplished with the following commands:
+
+#+begin_src bash
+  sudo apt-get install libfst-dev libfst-tools
+#+end_src
+
+** Installing =openfst-python=
+
+
 
 Of these, I was only able to install =openfst-python= in a Python 3.6
 environment.
 
 The following Debian Ubuntu packages are required packages:
-#+begin_quote
-openfst
-libfst-tools
-libfst-dev
-#+end_quote
 
 Then you can install =openfst-python=:
 
