@@ -177,6 +177,9 @@ with open(args.word_list) as ifp:
         # Word cannot contain excluded characters:
         if not set(wrd) >= req_chars:
             continue
+        # skip words that contain excluded characters
+        if set(wrd) & ex_chars:
+            continue
         lexicon.add(wrd)
 
 print(f'Number of five letter words loaded from "{args.word_list}": {len(lexicon)}')
