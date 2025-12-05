@@ -174,10 +174,10 @@ with open(args.word_list) as ifp:
         # Word has to be 5 letters long:
         if len(wrd) != 5:
             continue
-        # Word cannot contain excluded characters:
+        # Words must contain required characters:
         if not set(wrd) >= req_chars:
             continue
-        # skip words that contain excluded characters
+        # Words cannot contain excluded characters
         if set(wrd) & ex_chars:
             continue
         lexicon.add(wrd)
