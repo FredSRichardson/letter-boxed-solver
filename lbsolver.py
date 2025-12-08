@@ -2,10 +2,25 @@
 
 # This version uses a scrabble dictionary
 
-import argparse, re
+import argparse, re, math
 import openfst_python as fst
 
 EPSILON_TOK = '<epsilon>'
+
+def find_paths(current_state, current_data, fst_obj, paths):
+    no_out_arcs = True
+
+    for arc in fst_obj.arcs(current_state):
+        no_out_arcs = False
+        # Get input and output symbols (using symbol tables if available)
+        input_symbol = fst_obj.input_symbols().find(arc.ilabel) if fst_obj.input_symbols() else str(arc.ilabel)
+        output_symbol = fst_obj.output_symbols().find(arc.olabel) if fst_obj.output_symbols() else str(arc.olabel)
+        
+        # Recursively call for the next state
+        find_paths(arc.nextstate, current_data + [ (input_symbol, output_symbol, float(arc.weight)) ], fst_obj, paths)
+
+    if no_out_arcs:
+        paths.append(current_data)
 
 
 def split_lb_side(astr):
@@ -15,7 +30,97 @@ def split_lb_side(astr):
         return None
     return ret.groups()
 
-def make_lex_fst(lb_set, lb_wrds):
+def make_ngm3_fst(lb_wrds, lex_fst):
+    ngm_fst = fst.Fst()
+
+    syms = lex_fst.output_symbols()
+        
+    ngm_fst.set_input_symbols(syms)
+    ngm_fst.set_output_symbols(syms)
+
+    s_start = ngm_fst.add_state()
+    s_end = ngm_fst.add_state()
+
+    ngm_fst.set_start(s_start)
+
+    wt_one = fst.Weight.One(ngm_fst.weight_type())
+
+    # First word
+    for wrd1, wrd1_set in lb_wrds:
+        l1 = wrd1[-1]
+        scr = -len(wrd1_set) + -len(wrd1) / 1000.
+        # at least 3 unique letters covered by first word:
+        if scr > -3.5: continue
+        lbl = syms.find(wrd1)
+        s_w1 = ngm_fst.add_state()
+        ngm_fst.add_arc(s_start, fst.Arc(lbl, lbl, scr, s_w1))
+        # Bail after one word:
+        ngm_fst.add_arc(s_w1, fst.Arc(0, 0, wt_one, s_end))
+
+        for wrd2, wrd2_set in lb_wrds:
+            if wrd2[0] != l1: continue
+            scr = -len(wrd2_set - wrd1_set) + -len(wrd2) / 1000.
+            # at least 3 more unique letters covered by second word:
+            if scr > -3.5: continue
+            lbl = syms.find(wrd2)
+            s_w2 = ngm_fst.add_state()
+            ngm_fst.add_arc(s_w1, fst.Arc(lbl, lbl, scr, s_w2))
+            # Bail after 2 words:
+            ngm_fst.add_arc(s_w2, fst.Arc(0, 0, wt_one, s_end))
+
+            l2 = wrd2[-1]
+            for wrd3, wrd3_set in lb_wrds:
+                if wrd3[0] != l2: continue
+                scr = -len(wrd3_set - wrd2_set - wrd1_set) + -len(wrd3) / 1000.
+                # at least 3 more unique letters covered by third word:
+                if scr > -3.5: continue
+                lbl = syms.find(wrd3)
+                ngm_fst.add_arc(s_w2, fst.Arc(lbl, lbl, scr, s_end))
+                
+                
+    ngm_fst.set_final(s_end)
+    return ngm_fst
+
+def make_ngm2_fst(lb_wrds, lex_fst):
+    ngm_fst = fst.Fst()
+
+    syms = lex_fst.output_symbols()
+
+    ngm_fst.set_input_symbols(syms)
+    ngm_fst.set_output_symbols(syms)
+
+    s_start = ngm_fst.add_state()
+    s_end = ngm_fst.add_state()
+
+    ngm_fst.set_start(s_start)
+
+    wt_one = fst.Weight.One(ngm_fst.weight_type())
+
+    # First word
+    for wrd1, wrd1_set in lb_wrds:
+        l1 = wrd1[-1]
+        scr = -len(wrd1_set) + -(500 - len(wrd1)) / 1000.
+        # at least 3 unique letters covered by first word:
+        if scr > -4: continue
+        lbl = syms.find(wrd1)
+        s_w1 = ngm_fst.add_state()
+        ngm_fst.add_arc(s_start, fst.Arc(lbl, lbl, scr, s_w1))
+        # bail out after one word:
+        ngm_fst.add_arc(s_w1, fst.Arc(0, 0, wt_one, s_end))
+
+        for wrd2, wrd2_set in lb_wrds:
+            if wrd2[0] != l1: continue
+            scr = -len(wrd2_set - wrd1_set) + -(500-len(wrd2)) / 1000.
+            # at least 3 more unique letters covered by second word:
+            if scr > -4: continue
+            lbl = syms.find(wrd2)
+            ngm_fst.add_arc(s_w1, fst.Arc(lbl, lbl, scr, s_end))
+                
+    ngm_fst.set_final(s_end)
+    return ngm_fst
+
+
+def make_lex2_fst(lb_set, lb_wrds):
     lex_fst = fst.Fst()
 
     isyms = fst.SymbolTable()
@@ -41,22 +146,51 @@ def make_lex_fst(lb_set, lb_wrds):
     s_end = lex_fst.add_state()
 
     lex_fst.set_start(s_start)
+    lex_fst.set_final(s_end)
 
     wt_one = fst.Weight.One(lex_fst.weight_type())
 
-    for wrd, wrd_set in lb_wrds:
+    for wrd1, wrd1_set in lb_wrds:
         s_prev = s_start
-        for ind, c in enumerate(wrd):
-            s_new = lex_fst.add_state()
+        s_wrd1_end = None
+        for ind, c in enumerate(wrd1):
             ilbl = isyms.find(c)
-            olbl = 0
-            if ind == len(wrd) - 1:
-                olbl = osyms.find(wrd)
-            lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, -len(wrd_set), s_new))
+            if ind == 0:
+                s_new = lex_fst.add_state()
+                olbl = osyms.find(wrd1)
+                lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
+            elif ind == len(wrd1) - 1:
+                s_new = s_end
+                olbl = 0
+                lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
+                # save second-to-last state for next word:
+                s_wrd1_end = s_prev
+            else:
+                s_new = lex_fst.add_state()
+                olbl = 0
+                lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
             s_prev = s_new
-        lex_fst.add_arc(s_prev, fst.Arc(0, 0, wt_one, s_end))
-
-    lex_fst.set_final(s_end)
+        for wrd2, wrd2_set in lb_wrds:
+            if wrd1[-1] != wrd2[0]:
+                continue
+            # Second to last state of previous word - we're sharing the same letter:
+            s_prev = s_wrd1_end
+            # skip the first letter (note - this code would break on 2 letter words..):
+            for ind, c in enumerate(wrd2):
+                ilbl = isyms.find(c)
+                if ind == 0:
+                    s_new = lex_fst.add_state()
+                    olbl = osyms.find(wrd2)
+                    lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
+                elif ind == len(wrd2) - 1:
+                    s_new = s_end
+                    olbl = 0
+                    lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
+                else:
+                    s_new = lex_fst.add_state()
+                    olbl = 0
+                    lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
+                s_prev = s_new
     
     return lex_fst
 
@@ -111,6 +245,8 @@ def make_lb_fst(lb_sides, lex_fst):
                     # to the letter on side-j
                     lb_fst.add_arc(inode, fst.Arc(0, jlbl, wt_one, jnode))
 
+    # lb_fst.add_arc(s_end, fst.Arc(0, 0, wt_one, s_start))
+
     lb_fst.set_final(s_end)
     
     return lb_fst
@@ -163,12 +299,20 @@ with open(args.word_list) as ifp:
         lexicon.add(wrd)
 
 
-print(f'Number of words loaded from "{args.word_list}": {len(lexicon)}')
+if args.verbose:
+    print(f'Number of words loaded from "{args.word_list}": {len(lexicon)}')
             
 # Get the set of all Letter Boxed letters:
 lb_set = set(lb_t + lb_l + lb_r + lb_b)
 
 # Get words that only contain letters in the Letter Boxed set:
+DEBUG = False
+# DEBUG = True
+
+if DEBUG:
+    lexicon = set([ 'HANDCLAP', 'HANDCRAFT', 'PORTFOLIO', 'TROPICAL' ])
+
+
 lb_wrds = []
 for wrd in sorted(lexicon):
     if len(wrd) < 3:
@@ -176,78 +320,76 @@ for wrd in sorted(lexicon):
     wrd_set = set(wrd)
     if wrd_set - lb_set:
         continue
-    rem_set = lb_set - wrd_set
     lb_wrds.append( (wrd, wrd_set) )
 
-lex_fst = make_lex_fst(lb_set, lb_wrds)
-if args.lex_fst:
-    lex_fst.draw(args.lex_fst)
 
+if args.verbose:
+    print('Creating lexicon FST.')
+lex_fst = make_lex2_fst(lb_set, lb_wrds)
+if args.verbose:
+    print('Lexicon FST created.')
+
+if False:
+    # These seem to be fragile
+    print('Applying determinize to lexicon FST.')
+    lex_fst = fst.determinize(lex_fst)
+
+    print('Applying rmepsilon to lexicon FST.')
+    lex_fst = lex_fst.rmepsilon()
+    print('Applying minimize to lexicon FST.')
+    lex_fst = lex_fst.minimize()
+
+if DEBUG:
+    print(lex_fst)
+    print('')
+
+if args.verbose:
+    print('Creating N-gram FST.')
+ngm_fst = make_ngm2_fst(lb_wrds, lex_fst)
+if args.verbose:
+    print('N-gram FST created.')
+if DEBUG:
+    print(ngm_fst)
+    print('')
+
+
+if args.verbose:
+    print('Composing lexicon and N-gram FSTs.')
+lg_fst = fst.compose(lex_fst, ngm_fst)
+lg_fst.arcsort(sort_type="ilabel")
+if args.verbose:
+    print('Composition of lexicon and N-gram FTS complete.')
+if DEBUG:
+    print(lg_fst)
+    print('')
+
+if args.verbose:
+    print('Creating letter boxed FST.')
 lb_fst = make_lb_fst( [ lb_t, lb_l, lb_r, lb_b ], lex_fst)
-if args.lb_fst:
-    lb_fst.draw(args.lb_fst)
+if args.verbose:
+    print('Letter boxed FST created.')
 
-lex_fst = fst.determinize(lex_fst)
+if args.verbose:
+    print('Composing Letter Boxed FST and L o G FST.')
+lblg_fst = fst.compose(lb_fst, lg_fst)
+lblg_fst = lblg_fst.rmepsilon()
+if args.verbose:
+    print('Composition complete')
+if DEBUG:
+    print(lblg_fst)
+    print('')
 
+nb_fst = fst.shortestpath(lblg_fst, nshortest=100).rmepsilon()
 
-res_fst = fst.compose(lb_fst, lex_fst)
+paths = []
+find_paths(nb_fst.start(), [], nb_fst, paths)
 
-nb_fst = fst.shortestpath(res_fst, nshortest=100).rmepsilon()
+for p in paths:
+    scr = sum([ c[2] for c in p ])
+    wrds = ' '.join([ c[1] for c in p ])
+    n_match = math.floor(-scr)
+    if n_match != 12:
+        continue
+    print(f'  {wrds} {n_match}')
 
-print('+++ Possible Letter Boxed solutions for puzzle:')
-print(f'  LEFT:   {" ".join(lb_l)}')
-print(f'  TOP:    {" ".join(lb_t)}')
-print(f'  RIGHT:  {" ".join(lb_r)}')
-print(f'  BOTTOM: {" ".join(lb_b)}')
-print('')
-
-print('+++ Single word coverage: ')
-# Map of: 
-# #unique-letters -> set-of-unique-letters -> shortest to longeest words
-final_res = {}
-flat_res = []
-for nd in nb_fst.states():
-    for arc in nb_fst.arcs(nd):
-        if arc.olabel != 0:
-            wrd = nb_fst.output_symbols().find(arc.olabel)
-            wrd_set = set(wrd)
-            n_uniq = len(wrd_set)
-            if not n_uniq in final_res:
-                final_res[n_uniq] = {}
-            wrd_set_key = ' '.join(list(sorted(wrd_set)))
-            if not wrd_set_key in final_res[n_uniq]:
-                final_res[n_uniq][wrd_set_key] = []
-            final_res[n_uniq][wrd_set_key].append(wrd)
-            # print(f'{wrd} {len(wrd_set)}')
-            flat_res.append( (wrd, wrd_set) )
-
-for n_uniq in sorted(final_res, key=lambda x: -x):
-    for wrd_set in final_res[n_uniq]:
-        print(f'  number-letters: {n_uniq}, letters: {wrd_set}:')
-        for wrd in sorted(final_res[n_uniq][wrd_set], key=lambda x: len(x)):
-            print(f'    {wrd} len={len(wrd)}')
-
-print('')
-print('+++ Word pair coverage: ')
-pair_res = {}
-for wrd, wrd_set in flat_res:
-    for wrd2, wrd_set2 in flat_res:
-        if wrd == wrd2: continue
-        if wrd[-1] != wrd2[0]: continue
-        tot_set = wrd_set | wrd_set2
-        n_uniq = len(tot_set)
-        if not n_uniq in pair_res:
-            pair_res[n_uniq] = {}
-        wrd_set_key = ' '.join(list(sorted(tot_set)))
-        if not wrd_set_key in pair_res[n_uniq]:
-            pair_res[n_uniq][wrd_set_key]= []
-        pair_res[n_uniq][wrd_set_key].append(wrd + ' ' + wrd2)
-
-for n_uniq in sorted(pair_res, key=lambda x: -x):
-    for wrd_set in pair_res[n_uniq]:
-        print(f'  number-letters: {n_uniq}, letters: {wrd_set}:')
-        for wrd in sorted(pair_res[n_uniq][wrd_set], key=lambda x: len(x)):
-            print(f'    {wrd} len={len(wrd)}')
-
-print('')
 
