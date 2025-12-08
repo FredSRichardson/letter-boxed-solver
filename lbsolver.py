@@ -2,6 +2,10 @@
 
 # This version uses a scrabble dictionary
 
+# TODO: use single word parsed FST to create viable single word lexicon
+# Then use that lexicon to create trigram.
+# There's no need to make N-gram - we're already doing that as part of the lexicon creation...
+
 import argparse, re, math
 import openfst_python as fst
 
