@@ -112,45 +112,22 @@ Would require the following command line arguments (using the above =zyzzyva= le
 And the output looks like this:
 
 #+begin_quote
-Number of words loaded from "NASPAZyzzyva342/install/data/words/North-American/NSWL2023.txt": 195640
-+++ Possible Letter Boxed solutions for puzzle:
-  LEFT:   C H O
-  TOP:    P F N
-  RIGHT:  A I T
-  BOTTOM: R D L
-
-+++ Single word coverage: 
-  number-letters: 10, letters: A C H I L N O P R T:
-    ANTHROPICAL len=11
-    PHILANTHROPIC len=13
-    PHILANTHROPICAL len=15
-  number-letters: 10, letters: A D H I L N O P R T:
-    PHILANTHROPOID len=14
-  number-letters: 9, letters: A C I L N O P R T:
-    PANTROPICAL len=11
-    NONTROPICAL len=11
-  number-letters: 9, letters: A C D F H I N R T:
-    HANDICRAFT len=10
-  number-letters: 9, letters: A D H I N O P R T:
-<etc...>
-+++ Word pair coverage: 
-  number-letters: 12, letters: A C D F H I L N O P R T:
-    HANDCRAFT TROPICAL len=18
-    HANDCRAFT TRIPODAL len=18
-    HANDCRAFT TRIPLOID len=18
-    HANDCLAP PORTFOLIO len=18
-    HANDICAP PORTFOLIO len=18
-    HANDICRAFT TROPICAL len=19
-    HANDICRAFT TRIPODAL len=19
-    HANDICRAFT TRIPLOID len=19
-    PROLIFIC CANTHARIDIN len=20
-    AFICIONADA ANTHROPICAL len=22
-  number-letters: 11, letters: A C D H I L N O P R T:
-    CALTHROP PARANOID len=17
-    DALTONIC CALTHROP len=17
-    TORNADIC CALTHROP len=17
-    ANORTHIC CROPLAND len=17
-<etc...>
+  HANDCRAFT TOPICAL 12
+  HANDCRAFT TRIPOLI 12
+  PHILTRA AFICIONADA 12
+  PHILTRA AFICIONADO 12
+  HANDCLAP PORTFOLIO 12
+  HANDICAP PORTFOLIO 12
+  HANDICRAFT TOPICAL 12
+  HANDICRAFT TRIPOLI 12
+  HANDCRAFT TRIPLOID 12
+  HANDCRAFT TRIPODAL 12
+  HANDCRAFT TROPICAL 12
+  HANDICRAFT TRIPLOID 12
+  HANDICRAFT TRIPODAL 12
+  HANDICRAFT TROPICAL 12
+  PROLIFIC CANTHARIDIN 12
+  AFICIONADA ANTHROPICAL 12
 #+end_quote
 
 The output is giving you the best sequences of single words and word
