@@ -34,7 +34,7 @@ def split_lb_side(astr):
         return None
     return ret.groups()
 
-def make_lex2_fst(lb_set, lb_wrds):
+def make_lex_fst(lb_set, lb_wrds, word_pair=False):
     lex_fst = fst.Fst()
 
     isyms = fst.SymbolTable()
@@ -91,6 +91,8 @@ def make_lex2_fst(lb_set, lb_wrds):
                 olbl = 0
                 lex_fst.add_arc(s_prev, fst.Arc(ilbl, olbl, wt_one, s_new))
             s_prev = s_new
+        if not word_pair:
+            continue
         for wrd2, wrd2_set in lb_wrds:
             if wrd2[0] != l1:
                 continue
@@ -254,10 +256,30 @@ for wrd in sorted(lexicon):
         continue
     lb_wrds.append( (wrd, wrd_set) )
 
+lex_fst = make_lex_fst(lb_set, lb_wrds, word_pair=False)
+lex_fst.arcsort(sort_type="ilabel")
+lb_fst = make_lb_fst( [ lb_t, lb_l, lb_r, lb_b ], lex_fst)
+lblg_fst = fst.compose(lb_fst, lex_fst)
+lblg_fst = lblg_fst.rmepsilon()
+nb_fst = fst.shortestpath(lblg_fst, nshortest=100).rmepsilon()
+paths = []
+find_paths(nb_fst.start(), [], nb_fst, paths)
+lexicon = set()
+for p in paths:
+    for c in p:
+        lexicon.add(c[1])
+lb_wrds = []
+for wrd in sorted(lexicon):
+    if len(wrd) < 3:
+        continue
+    wrd_set = set(wrd)
+    if wrd_set - lb_set:
+        continue
+    lb_wrds.append( (wrd, wrd_set) )
 
 if args.verbose:
     print('Creating lexicon FST.')
-lex_fst = make_lex2_fst(lb_set, lb_wrds)
+lex_fst = make_lex_fst(lb_set, lb_wrds, word_pair=True)
 if args.verbose:
     print('Lexicon FST created.')
 
