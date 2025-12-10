@@ -261,7 +261,7 @@ lex_fst.arcsort(sort_type="ilabel")
 lb_fst = make_lb_fst( [ lb_t, lb_l, lb_r, lb_b ], lex_fst)
 lblg_fst = fst.compose(lb_fst, lex_fst)
 lblg_fst = lblg_fst.rmepsilon()
-nb_fst = fst.shortestpath(lblg_fst, nshortest=100).rmepsilon()
+nb_fst = fst.shortestpath(lblg_fst, nshortest=10000).rmepsilon()
 paths = []
 find_paths(nb_fst.start(), [], nb_fst, paths)
 lexicon = set()
@@ -269,6 +269,7 @@ for p in paths:
     for c in p:
         lexicon.add(c[1])
 lb_wrds = []
+print(f'Number of words that parse: {len(lexicon)}')
 for wrd in sorted(lexicon):
     if len(wrd) < 3:
         continue
