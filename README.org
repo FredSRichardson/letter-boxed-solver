@@ -104,9 +104,8 @@ For example, the following puzzle (from Dec 01 2025):
 
 Would require the following command line arguments (using the above =zyzzyva= lexicon):
 #+begin_src bash
-  ./lbsolver.py -l CHO -t PFN -r AIT -b RDL \
-                -w NASPAZyzzyva342/install/data/words/North-American/NSWL2023.txt \
-                   > 01Dec2025-letter-boxed.txt
+% ./lbsolver.py -l CHO -t PFN -r AIT -b RDL \
+    -w NASPAZyzzyva342/install/data/words/North-American/NSWL2023.txt
 #+end_src
 
 And the output looks like this:
