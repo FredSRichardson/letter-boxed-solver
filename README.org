@@ -71,7 +71,7 @@ output yourself.
 
 * Letter Boxed Example
 The =lbsolver.py= script usage is as follows:
-#+begin_quote
+#+begin_example
 usage: lbsolver.py [-h] [-v] -l LEFT -r RIGHT -t TOP -b BOTTOM -w WORD_LIST
 
 Solve the NYT Letter Boxed puzzle using a word list
@@ -87,7 +87,7 @@ optional arguments:
                         Bottom edge of Letter Boxed puzzle
   -w WORD_LIST, --word-list WORD_LIST
                         Word list to use
-#+end_quote
+#+end_example
 
 You just use the string of letters in the left, top, right and bottom of the
 box for each of the =-l=, =-t=, =-r= and =-t= arguments (you can
@@ -95,12 +95,12 @@ actually mix them up and it won't matter) and you specify a word list.
 
 For example, the following puzzle (from Dec 01 2025):
 
-#+begin_quote
+#+begin_example
   LEFT:   C H O
   TOP:    P F N
   RIGHT:  A I T
   BOTTOM: R D L
-#+end_quote
+#+end_example
 
 Would require the following command line arguments (using the above =zyzzyva= lexicon):
 #+begin_src bash
@@ -110,7 +110,7 @@ Would require the following command line arguments (using the above =zyzzyva= le
 
 And the output looks like this:
 
-#+begin_quote
+#+begin_example
   HANDCRAFT TOPICAL 12
   HANDCRAFT TRIPOLI 12
   PHILTRA AFICIONADA 12
@@ -127,7 +127,7 @@ And the output looks like this:
   HANDICRAFT TROPICAL 12
   PROLIFIC CANTHARIDIN 12
   AFICIONADA ANTHROPICAL 12
-#+end_quote
+#+end_example
 
 The output is giving you the best sequences of single words and word
 pairs by the number of unique letters they cover in the puzzle.  So in
@@ -142,7 +142,7 @@ That is if you enjoy the puzzle.
 
 So the syntax for the =wdlysolver.py= script is as follows:
 
-#+begin_quote
+#+begin_example
 usage: wdlysolver.py [-h] [-v] [-ex EX] [-c1 C1] [-c2 C2] [-c3 C3] [-c4 C4] [-c5 C5] -w WORD_LIST
 
 Solve the NYT Letter Boxed puzzle using a word list
@@ -158,7 +158,7 @@ optional arguments:
   -c5 C5                Pattern to search for first letter of 5 letter for - only ".", "C", "^ADF" are supported
   -w WORD_LIST, --word-list WORD_LIST
                         Word list to use
-#+end_quote
+#+end_example
 
 For letters which are solved in you puzzle, you just put the
 letter. For example, if you know the 3rd letter is "A", use the
@@ -191,7 +191,7 @@ they really be allowed in a North American game of Scrabble?  Maybe
 only if you can pull off a very convincing Scottish accent - and the
 bar might not be too high among Americans listeners.
 
-#+begin_quote
+#+begin_example
 BYTES
 WYTES
 STYES
@@ -205,7 +205,7 @@ TYEES
 TYKES
 TREYS
 KYTES
-#+end_quote
+#+end_example
 
 The solution ended up being "BYTES" (which I got after trying
 "TYPES").
