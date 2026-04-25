@@ -72,13 +72,15 @@ output yourself.
 * Letter Boxed Example
 The =lbsolver.py= script usage is as follows:
 #+begin_example
-usage: lbsolver.py [-h] [-v] -l LEFT -r RIGHT -t TOP -b BOTTOM -w WORD_LIST
+usage: lbsolver.py [-h] [-v] [--lex-fst LEX_FST] [--lb-fst LB_FST] -l LEFT -r RIGHT -t TOP -b BOTTOM -w WORD_LIST
 
 Solve the NYT Letter Boxed puzzle using a word list
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --verbose         increase output verbosity
+  --lex-fst LEX_FST     Save the lexicon FST in GraphViz format
+  --lb-fst LB_FST       Save the Letter Boxed FST in GraphViz format
   -l LEFT, --left LEFT  Left edge of Letter Boxed puzzle
   -r RIGHT, --right RIGHT
                         Right edge of Letter Boxed puzzle
@@ -111,6 +113,7 @@ Would require the following command line arguments (using the above =zyzzyva= le
 And the output looks like this:
 
 #+begin_example
+Number of words that parse: 857
   HANDCRAFT TOPICAL 12
   HANDCRAFT TRIPOLI 12
   PHILTRA AFICIONADA 12
@@ -185,26 +188,23 @@ the solution.  So I ran the =wdlysolver.py= script as follows:
 Both the =wordletools= and =wordraiders= lists failed for me (no words
 matched) while the Scrabble list gave me these interesting results, of
 which I only really believed "BYTES" and "TYPES" would be accepted by
-Wordly. I looked up a few of the other words like "WYTES" and "KYTES",
-and according to Merriam-Webster they are "chiefly Scottish". Would
+Wordly. I looked up a few of the other words like "WYTES" and "KYTES"
+which according to Merriam-Webster are "chiefly Scottish". Would
 they really be allowed in a North American game of Scrabble?  Maybe
 only if you can pull off a very convincing Scottish accent - and the
 bar might not be too high among Americans listeners.
 
 #+begin_example
-BYTES
-WYTES
+STEWY
 STYES
 STYED
-STEWY
-TYNES
-TYRES
-TYPES
-TYERS
 TYEES
 TYKES
-TREYS
+TYNES
+TYPES
+WYTES
 KYTES
+BYTES
 #+end_example
 
 The solution ended up being "BYTES" (which I got after trying
