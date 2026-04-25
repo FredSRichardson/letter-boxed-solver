@@ -4,6 +4,7 @@
 
 import argparse, re, string
 import openfst_python as fst
+from collections import Counter
 
 EPSILON_TOK = '<epsilon>'
 
@@ -193,8 +194,21 @@ res_fst = fst.compose(wdl_fst, lex_fst)
 nb_fst = fst.shortestpath(res_fst, nshortest=100).rmepsilon()
 
 print('+++ Five letter words matching pattern: ')
+cnts = [ Counter() for i in range(6) ]
 for nd in nb_fst.states():
     for arc in nb_fst.arcs(nd):
         if arc.olabel != 0:
             wrd = nb_fst.output_symbols().find(arc.olabel)
             print(wrd)
+            for i in range(5):
+                cnts[i+1][wrd[i]] += 1
+                cnts[0][wrd[i]] += 1
+
+print('')
+print(f'Letter counts:')
+for l, c in cnts[0].most_common():
+    print(f'  {l}: {c}')
+for i in range(1, 6):
+    print(f'Letter position {i}:')
+    for l, c in cnts[i].most_common():
+        print(f'  {l}: {c}')
